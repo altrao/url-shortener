@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: cassandra:5.0
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra-data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+
+  cassandra-load-keyspace:
+    container_name: cassandra-load-keyspace
+    image: cassandra:5.0
+    depends_on:
+      - cassandra
+    volumes:
+      - ./docker/cassandra/init/01-create-keyspace.cql:/create-keyspace.cql
+    command: /bin/bash -c "sleep 60 && echo loading cassandra keyspace && cqlsh cassandra -f /create-keyspace.cql"
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/redis
+    command: redis-server --appendonly yes
+
+volumes:
+  cassandra-data:
+  redis-data:
