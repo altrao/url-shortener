@@ -1,3 +1,6 @@
+shortener:
+  base-url: http://test-url.com
+
 spring:
   cassandra:
     keyspace-name: url_shortener
@@ -13,5 +16,3 @@ spring:
 
 server:
   port: 8080
-
-app.base-url: http://localhost:8080

@@ -13,9 +13,8 @@ import java.net.URI
 class ShortenController(
     private val urlShortenerService: UrlShortenerService,
 ) {
-    @Value("\${app.base-url}")
+    @Value("\${shortener.base-url}")
     private lateinit var baseUrl: String
-
 
     @PostMapping("/shorten")
     fun shortenUrl(@RequestBody request: ShortenRequest): ShortenResponse {
