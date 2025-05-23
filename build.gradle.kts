@@ -23,6 +23,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis:3.4.5")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.bucket4j:bucket4j-redis:8.10.1")
+    implementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")

@@ -1,5 +1,11 @@
 shortener:
   base-url: http://test-url.com
+  rate-limit:
+    capacity: 30
+    minutes: 1
+    burst:
+      capacity: 10
+      seconds: 5
 
 spring:
   cassandra:
@@ -13,6 +19,10 @@ spring:
     connection:
       connect-timeout: 30s
       init-query-timeout: 30s
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 server:
   port: 8080

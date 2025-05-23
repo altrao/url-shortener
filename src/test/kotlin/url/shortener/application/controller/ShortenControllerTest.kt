@@ -19,7 +19,7 @@ import url.shortener.domain.model.UrlMapping
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-@WebMvcTest(ShortenController::class)
+@WebMvcTest(ShortenController::class, useDefaultFilters = false)
 class ShortenControllerTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
