@@ -4,10 +4,8 @@ import com.datastax.oss.driver.shaded.guava.common.hash.HashFunction
 import com.datastax.oss.driver.shaded.guava.common.hash.Hashing
 import url.shortener.domain.model.UrlMapping
 import url.shortener.domain.repository.UrlMappingRepository
-import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
 import java.util.*
 
 class UrlShortenerService(
@@ -16,8 +14,6 @@ class UrlShortenerService(
     private val hashing: HashFunction = Hashing.goodFastHash(128),
     private val slice: Int = 12
 ) {
-
-
     fun shortenUrl(
         longUrl: String,
         customAlias: String? = null,
@@ -49,13 +45,15 @@ class UrlShortenerService(
      * @return A unique shortened URL identifier.
      */
     private tailrec fun generateShortUrl(longUrl: String): String {
-        val hash = hashing.hashString(longUrl, Charsets.UTF_8).toString().substring(0, slice)
+        val hash = encoder.encodeToString(
+            hashing.hashString(longUrl, Charsets.UTF_8).toString().substring(0, slice).encodeToByteArray()
+        )
 
         if (urlMappingRepository.exists(hash)) {
-            return generateShortUrl(longUrl + hash)
+            return generateShortUrl(longUrl + longUrl.last())
         }
 
-        return encoder.encodeToString(hash.encodeToByteArray())
+        return hash
     }
 
     private fun validateUrl(url: String) {
