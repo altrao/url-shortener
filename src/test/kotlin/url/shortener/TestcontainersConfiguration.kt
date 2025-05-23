@@ -7,14 +7,16 @@ import org.testcontainers.cassandra.CassandraContainer
 import org.testcontainers.containers.GenericContainer
 
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
-
+class CassandraTestContainerConfiguration {
     @Bean
     @ServiceConnection
     fun cassandraContainer(): CassandraContainer {
         return CassandraContainer("cassandra:latest").withInitScript("cassandra-keyspace.cql")
     }
+}
 
+@TestConfiguration
+class RedisTestContainerConfiguration {
     @Bean
     @ServiceConnection(name = "redis")
     fun redisContainer(): GenericContainer<*> {

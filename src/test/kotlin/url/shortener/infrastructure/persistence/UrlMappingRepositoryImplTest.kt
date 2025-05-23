@@ -2,21 +2,26 @@ package url.shortener.infrastructure.persistence
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.runner.RunWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration
+import org.springframework.boot.test.autoconfigure.data.cassandra.DataCassandraTest
 import org.springframework.test.context.ContextConfiguration
-import url.shortener.TestcontainersConfiguration
+import org.springframework.test.context.junit4.SpringRunner
+import url.shortener.CassandraTestContainerConfiguration
 import url.shortener.domain.model.UrlMapping
+import url.shortener.domain.repository.UrlMappingRepository
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
-@SpringBootTest
-@ContextConfiguration(classes = [TestcontainersConfiguration::class])
+@DataCassandraTest
+@RunWith(SpringRunner::class)
+@EnableAutoConfiguration
+@ContextConfiguration(classes = [CassandraTestContainerConfiguration::class, UrlMappingRepositoryImpl::class])
 class UrlMappingRepositoryImplTest {
-
     @Autowired
-    private lateinit var repository: UrlMappingRepositoryImpl
+    private lateinit var repository: UrlMappingRepository
 
     @Test
     fun `should save and find url mapping`() {
