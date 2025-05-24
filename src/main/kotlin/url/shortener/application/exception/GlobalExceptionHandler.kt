@@ -8,8 +8,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 @ControllerAdvice
 class GlobalExceptionHandler : ResponseEntityExceptionHandler() {
-    @ExceptionHandler(IllegalArgumentException::class)
-    fun handleAllExceptions(ex: IllegalArgumentException): ResponseEntity<ErrorResponse> {
+    @ExceptionHandler(InvalidRequestException::class)
+    fun handleAllExceptions(ex: InvalidRequestException): ResponseEntity<ErrorResponse> {
         return ResponseEntity(
             ErrorResponse(
                 status = HttpStatus.BAD_REQUEST.value(),
