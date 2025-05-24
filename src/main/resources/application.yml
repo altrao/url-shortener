@@ -6,6 +6,9 @@ shortener:
     burst:
       capacity: 10
       seconds: 5
+  cache-ttl-minutes: 60
+  default-expiration: 2880
+  maximum-expiration: 10080
 
 spring:
   cassandra:
