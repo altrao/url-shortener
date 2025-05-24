@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
+import org.springframework.data.redis.core.RedisTemplate
 import url.shortener.infrastructure.limiter.RateLimitConfiguration
 import java.time.Duration
 import java.util.function.Supplier
@@ -71,5 +72,12 @@ class RedisConfig(
                 )
             }
         }.build()
+    }
+
+    @Bean
+    fun redisTemplate(factory: RedisConnectionFactory): RedisTemplate<String, *> {
+        return RedisTemplate<String, Any>().apply {
+            connectionFactory = factory
+        }
     }
 }
