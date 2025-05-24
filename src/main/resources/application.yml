@@ -1,5 +1,5 @@
 shortener:
-  base-url: http://test-url.com
+  base-url: http://localhost:8080
   rate-limit:
     capacity: 30
     minutes: 1
