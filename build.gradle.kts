@@ -26,6 +26,11 @@ dependencies {
     implementation("com.bucket4j:bucket4j-redis:8.10.1")
     implementation("io.lettuce:lettuce-core:6.3.2.RELEASE")
     implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("io.micrometer:micrometer-bom:1.15.0")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("io.micrometer:micrometer-registry-prometheus-simpleclient")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
