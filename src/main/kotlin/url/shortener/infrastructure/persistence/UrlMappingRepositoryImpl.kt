@@ -25,6 +25,20 @@ class UrlMappingRepositoryImpl(
         return cassandraRepository.existsById(shortUrl)
     }
 
+    override fun findAllExpired(): List<String> {
+        return cassandraRepository.findAllByExpirationDateBefore()
+    }
+
+    override fun deleteAll(urls: List<String>): Int {
+        if (urls.isEmpty()) {
+            return 0
+        }
+
+        cassandraRepository.deleteAllById(urls)
+
+        return urls.size
+    }
+
     private fun UrlMappingEntity.toDomain(): UrlMapping {
         return UrlMapping(
             id = shortUrl,
