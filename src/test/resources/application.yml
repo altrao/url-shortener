@@ -1,5 +1,9 @@
 shortener:
   base-url: http://test-url.com
+  rate-limit:
+    burst:
+      seconds: 20
+      capacity: 50
 
 spring:
   cassandra:
