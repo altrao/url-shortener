@@ -46,6 +46,10 @@ class UrlShortenerService(
             throw InvalidRequestException("Invalid URL format")
         }
 
+        if (expirationDate?.isBefore(Instant.now()) == true) {
+            throw InvalidRequestException("URL expiration date cannot be in the past")
+        }
+
         if (customAlias != null && urlMappingRepository.exists(customAlias)) {
             throw InvalidRequestException("Custom alias already exists")
         }
@@ -92,9 +96,10 @@ class UrlShortenerService(
     }
 
     private fun findAndCache(shortUrl: String): UrlMapping? {
-        val cached = findInCache(shortUrl)
+        val cached = redis.opsForValue().get(shortUrl)
 
         if (cached != null) {
+            redis.expire(shortUrl, config.cacheTtlMinutes, TimeUnit.MINUTES)
             return cached
         }
 
@@ -109,15 +114,5 @@ class UrlShortenerService(
 
     private fun cache(urlMapping: UrlMapping) {
         redis.opsForValue().set(urlMapping.id, urlMapping, config.cacheTtlMinutes, TimeUnit.MINUTES)
-    }
-
-    private fun findInCache(shortUrl: String): UrlMapping? {
-        val longUrl = redis.opsForValue().get(shortUrl)
-
-        if (longUrl != null) {
-            redis.expire(shortUrl, config.cacheTtlMinutes, TimeUnit.MINUTES)
-        }
-
-        return longUrl
     }
 }
