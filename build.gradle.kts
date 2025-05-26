@@ -32,6 +32,7 @@ dependencies {
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.testcontainers:cassandra")
     testImplementation("org.testcontainers:junit-jupiter")
+    testImplementation("com.redis:testcontainers-redis")
     testImplementation("io.mockk:mockk:1.14.2")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

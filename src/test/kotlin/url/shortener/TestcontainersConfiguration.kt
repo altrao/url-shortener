@@ -1,12 +1,13 @@
 package url.shortener
 
+import com.redis.testcontainers.RedisContainer
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection
 import org.springframework.context.annotation.Bean
+import org.springframework.test.context.DynamicPropertyRegistrar
 import org.testcontainers.cassandra.CassandraContainer
-import org.testcontainers.containers.GenericContainer
 
-@TestConfiguration(proxyBeanMethods = false)
+@TestConfiguration
 class CassandraTestContainerConfiguration {
     @Bean
     @ServiceConnection
@@ -18,8 +19,16 @@ class CassandraTestContainerConfiguration {
 @TestConfiguration
 class RedisTestContainerConfiguration {
     @Bean
-    @ServiceConnection(name = "redis")
-    fun redisContainer(): GenericContainer<*> {
-        return GenericContainer("redis:latest").withExposedPorts(6379)
+    @ServiceConnection
+    fun redisContainer(): RedisContainer {
+        return RedisContainer("redis:6.2.6")
+    }
+
+    @Bean
+    fun registerRedisProperties(redisContainer: RedisContainer): DynamicPropertyRegistrar {
+        return DynamicPropertyRegistrar { registry ->
+            registry.add("spring.data.redis.host", redisContainer::getRedisHost)
+            registry.add("spring.data.redis.port", redisContainer::getRedisPort)
+        }
     }
 }

@@ -24,7 +24,7 @@ services:
     command: /bin/bash -c "sleep 60 && echo loading cassandra keyspace && cqlsh cassandra -f /create-keyspace.cql"
 
   redis:
-    image: redis:latest
+    image: redis:6.2.6
     ports:
       - "6379:6379"
     volumes:
