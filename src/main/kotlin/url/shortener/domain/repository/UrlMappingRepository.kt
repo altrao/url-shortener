@@ -5,8 +5,7 @@ import url.shortener.domain.model.UrlMapping
 interface UrlMappingRepository {
     fun find(shortUrl: String): UrlMapping?
     fun save(urlMapping: UrlMapping): UrlMapping
-    fun delete(shortUrl: String): Boolean
     fun exists(shortUrl: String): Boolean
-    fun findAllExpired(): List<String>
-    fun deleteAll(urls: List<String>): Int
+    fun findAllExpired(): List<UrlMapping>
+    fun deleteAll(urls: List<UrlMapping>): Int
 }

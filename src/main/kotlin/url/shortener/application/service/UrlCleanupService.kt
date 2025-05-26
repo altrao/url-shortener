@@ -19,8 +19,11 @@ class UrlCleanupService(
             val expiredUrls = urlMappingRepository.findAllExpired()
 
             if (expiredUrls.isNotEmpty()) {
+                logger.debug("Found ${expiredUrls.size} expired URLs to clean up")
+
                 val deletedCount = urlMappingRepository.deleteAll(expiredUrls)
-                logger.info("Cleaned up $deletedCount expired URLs")
+
+                logger.info("Successfully cleaned up $deletedCount expired URLs")
             }
         } catch (e: Exception) {
             logger.error("Failed to clean up expired URLs", e)

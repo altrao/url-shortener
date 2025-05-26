@@ -27,14 +27,18 @@ class UrlMappingRepositoryImpl(
 
     override fun findAllExpired(): List<String> {
         return cassandraRepository.findAllByExpirationDateBefore()
+    override fun findAllExpired(): List<UrlMapping> {
+        return cassandraRepository.findAllExpired().map { it.toDomain() }
     }
 
     override fun deleteAll(urls: List<String>): Int {
+    override fun deleteAll(urls: List<UrlMapping>): Int {
         if (urls.isEmpty()) {
             return 0
         }
 
-        cassandraRepository.deleteAllById(urls)
+        cassandraRepository.deleteAllById(urls.map(UrlMapping::id))
+        logger.info("Deleted batch of ${urls.size} URLs")
 
         return urls.size
     }
