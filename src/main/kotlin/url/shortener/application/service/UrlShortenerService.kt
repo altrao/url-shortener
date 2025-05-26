@@ -2,12 +2,15 @@ package url.shortener.application.service
 
 import com.datastax.oss.driver.shaded.guava.common.hash.HashFunction
 import com.datastax.oss.driver.shaded.guava.common.hash.Hashing
+import io.micrometer.core.annotation.Timed
+import io.micrometer.core.instrument.MeterRegistry
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
 import url.shortener.application.exception.InvalidRequestException
 import url.shortener.domain.model.UrlMapping
 import url.shortener.domain.repository.UrlMappingRepository
 import url.shortener.infrastructure.UrlShortenerConfig
+import url.shortener.logger
 import java.net.URI
 import java.net.URISyntaxException
 import java.security.SecureRandom
@@ -37,10 +40,15 @@ import java.util.concurrent.TimeUnit
 class UrlShortenerService(
     private val urlMappingRepository: UrlMappingRepository,
     private val config: UrlShortenerConfig,
-    private val redis: RedisTemplate<String, UrlMapping>
+    private val redis: RedisTemplate<String, UrlMapping>,
+    private val meterRegistry: MeterRegistry
 ) {
-    private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
+    companion object {
+        private val logger = logger()
+    }
+
     private val random = SecureRandom()
+    private val encoder: Base64.Encoder = Base64.getUrlEncoder().withoutPadding()
     private val hashing: HashFunction = Hashing.murmur3_32(random.nextInt())
 
     /**
@@ -54,18 +62,32 @@ class UrlShortenerService(
      * @return A [UrlMapping] object containing the details of the shortened URL, including the unique identifier, original long URL, and expiration details.
      * @throws InvalidRequestException If the input values are invalid, such as an invalid URL format, a duplicate custom alias, or an expiration date in the past.
      */
+    @Timed(value = "shortener.shorten.time", description = "Time taken to shorten URL")
     fun shortenUrl(longUrl: String, customAlias: String? = null, expirationDate: Instant? = null): UrlMapping {
-        validate(longUrl, customAlias, expirationDate)
+        try {
+            validate(longUrl, customAlias, expirationDate)
 
-        val urlMapping = UrlMapping(
-            id = customAlias ?: generateShortUrl(longUrl),
-            longUrl = longUrl,
-            expirationDate = expirationDate ?: Instant.now().plus(config.defaultExpiration, ChronoUnit.MINUTES)
-        )
+            val urlMapping = UrlMapping(
+                id = customAlias ?: generateShortUrl(longUrl),
+                longUrl = longUrl,
+                expirationDate = expirationDate ?: Instant.now().plus(config.defaultExpiration, ChronoUnit.MINUTES)
+            )
 
-        cache(urlMapping)
+            cache(urlMapping)
+            val savedMapping = urlMappingRepository.save(urlMapping)
 
-        return urlMappingRepository.save(urlMapping)
+            meterRegistry.counter("shortener.shorten.success").increment()
+            logger.debug("Successfully shortened URL: ${savedMapping.id} -> ${savedMapping.longUrl}")
+
+            return savedMapping
+        } catch (e: Exception) {
+            if (e !is InvalidRequestException) {
+                meterRegistry.counter("shortener.shorten.errors").increment()
+                logger.error("Failed to shorten URL: $longUrl", e)
+            }
+
+            throw e
+        }
     }
 
     /**
@@ -133,18 +155,28 @@ class UrlShortenerService(
      * @param shortUrl The unique identifier for the short URL to search in the cache or database.
      * @return The corresponding `UrlMapping` if found, or null if the short URL does not exist.
      */
-    private fun findAndCache(shortUrl: String): UrlMapping? {
+    @Timed(value = "shortener.lookup.time", description = "Time taken to lookup URL")
+    internal fun findAndCache(shortUrl: String): UrlMapping? {
         val cached = redis.opsForValue().get(shortUrl)
 
         if (cached != null) {
             redis.expire(shortUrl, config.cacheTtlMinutes, TimeUnit.MINUTES)
+
+            meterRegistry.counter("shortener.cache.hits").increment()
+            logger.debug("Cache hit for short URL: $shortUrl")
+
             return cached
         }
+
+        meterRegistry.counter("shortener.cache.misses").increment()
 
         val urlMapping = urlMappingRepository.find(shortUrl)
 
         if (urlMapping != null) {
             cache(urlMapping)
+            logger.debug("Cached URL mapping for: $shortUrl")
+        } else {
+            logger.debug("URL mapping not found for: $shortUrl")
         }
 
         return urlMapping

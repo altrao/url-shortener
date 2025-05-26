@@ -23,7 +23,7 @@ class UrlShortenerServiceTest {
     private val redis: RedisTemplate<String, UrlMapping> = mockk(relaxed = true)
     private val config = UrlShortenerConfig(defaultExpiration = 60, maximumExpiration = 120, cacheTtlMinutes = 10)
 
-    private val service = UrlShortenerService(repository, config, redis)
+    private val service = UrlShortenerService(repository, config, redis, mockk(relaxed = true))
 
     @BeforeEach
     fun setup() {
@@ -93,7 +93,7 @@ class UrlShortenerServiceTest {
     }
 
     @Test
-    fun `should throw when getting expired url`() {
+    fun `should return null when getting expired url`() {
         val shortUrl = "abc123"
         val expired = Instant.now().minus(1, ChronoUnit.DAYS)
 
@@ -103,9 +103,7 @@ class UrlShortenerServiceTest {
             expirationDate = expired
         )
 
-        assertThrows<InvalidRequestException> {
-            service.getUrlMapping(shortUrl)
-        }
+        assertNull(service.getUrlMapping(shortUrl))
     }
 
     @Test
