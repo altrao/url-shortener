@@ -1,4 +1,4 @@
-package url.shortener
+package url.shortener.configuration
 
 import com.redis.testcontainers.RedisContainer
 import org.springframework.boot.test.context.TestConfiguration

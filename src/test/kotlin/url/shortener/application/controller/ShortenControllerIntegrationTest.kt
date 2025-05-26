@@ -19,8 +19,8 @@ import org.springframework.test.web.servlet.ResultActions
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import url.shortener.CassandraTestContainerConfiguration
-import url.shortener.RedisTestContainerConfiguration
+import url.shortener.configuration.CassandraTestContainerConfiguration
+import url.shortener.configuration.RedisTestContainerConfiguration
 import url.shortener.application.dto.ShortenRequest
 import url.shortener.application.dto.ShortenResponse
 import java.time.Instant
