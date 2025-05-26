@@ -25,7 +25,7 @@ data class UrlShortenerConfig(
     /**
      * Specifies the maximum time-to-live duration, in minutes, for URL mappings stored in the database.
      */
-    var maximumExpiration: Int = 10080,
+    var maximumExpiration: Long = 10080,
 
     /**
      * Specifies the time-to-live duration, in minutes, for URL mappings stored in the cache.

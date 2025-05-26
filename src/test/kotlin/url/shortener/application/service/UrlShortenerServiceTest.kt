@@ -41,6 +41,26 @@ class UrlShortenerServiceTest {
     }
 
     @Test
+    fun `should throw when expiration date is in the past`() {
+        val longUrl = "https://example.com"
+        val pastDate = Instant.now().minus(1, ChronoUnit.HOURS)
+
+        assertThrows<InvalidRequestException> {
+            service.shortenUrl(longUrl, expirationDate = pastDate)
+        }
+    }
+
+    @Test
+    fun `should throw when expiration date exceeds maximum allowed period`() {
+        val longUrl = "https://example.com"
+        val futureDate = Instant.now().plus(config.maximumExpiration + 10, ChronoUnit.MINUTES)
+
+        assertThrows<InvalidRequestException> {
+            service.shortenUrl(longUrl, expirationDate = futureDate)
+        }
+    }
+
+    @Test
     fun `should generate short url when no custom alias`() {
         val longUrl = "https://example.com"
 
@@ -82,7 +102,7 @@ class UrlShortenerServiceTest {
     @Test
     fun `should set expiration date when provided`() {
         val longUrl = "https://example.com"
-        val expiration = Instant.now().plus(1, ChronoUnit.DAYS)
+        val expiration = Instant.now().plus(60, ChronoUnit.MINUTES)
 
         every { repository.exists(any()) } returns false
         every { repository.save(any()) } returns UrlMapping("abc123", longUrl, expirationDate = expiration)

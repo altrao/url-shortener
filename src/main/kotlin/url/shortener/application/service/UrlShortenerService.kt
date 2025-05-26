@@ -114,8 +114,14 @@ class UrlShortenerService(
             throw InvalidRequestException("Invalid URL format")
         }
 
-        if (expirationDate?.isBefore(Instant.now()) == true) {
-            throw InvalidRequestException("URL expiration date cannot be in the past")
+        if (expirationDate != null) {
+            if (expirationDate.isBefore(Instant.now())) {
+                throw InvalidRequestException("URL expiration date cannot be in the past")
+            }
+
+            if (expirationDate.isAfter(Instant.now().plus(config.maximumExpiration, ChronoUnit.MINUTES)) ) {
+                throw InvalidRequestException("URL expiration date cannot be more than ${config.maximumExpiration} minutes")
+            }
         }
 
         if (customAlias != null && urlMappingRepository.exists(customAlias)) {

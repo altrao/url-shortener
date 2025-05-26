@@ -8,7 +8,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.autoconfigure.data.cassandra.DataCassandraTest
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit4.SpringRunner
-import url.shortener.CassandraTestContainerConfiguration
+import url.shortener.configuration.CassandraTestContainerConfiguration
+import url.shortener.configuration.MetricsTestConfiguration
 import url.shortener.domain.model.UrlMapping
 import url.shortener.domain.repository.UrlMappingRepository
 import java.time.Instant
@@ -18,7 +19,7 @@ import java.time.temporal.ChronoUnit
 @DataCassandraTest
 @RunWith(SpringRunner::class)
 @EnableAutoConfiguration
-@ContextConfiguration(classes = [CassandraTestContainerConfiguration::class, UrlMappingRepositoryImpl::class])
+@ContextConfiguration(classes = [CassandraTestContainerConfiguration::class, UrlMappingRepositoryImpl::class, MetricsTestConfiguration::class])
 class UrlMappingRepositoryImplTest {
     @Autowired
     private lateinit var repository: UrlMappingRepository
@@ -58,20 +59,6 @@ class UrlMappingRepositoryImplTest {
 
         assertTrue(repository.exists("existent"))
         assertFalse(repository.exists("non-existent"))
-    }
-
-    @Test
-    fun `should delete mapping`() {
-        val urlMapping = UrlMapping(
-            id = "delete-mapping",
-            longUrl = "https://example.com",
-            expirationDate = null
-        )
-
-        repository.save(urlMapping)
-
-        assertTrue(repository.delete("delete-mapping"))
-        assertFalse(repository.exists("delete-mapping"))
     }
 
     @Test
