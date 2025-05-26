@@ -17,18 +17,22 @@ class ShortenController(
     private lateinit var baseUrl: String
 
     @PostMapping("/shorten")
-    fun shortenUrl(@RequestBody request: ShortenRequest): ShortenResponse {
+    fun shortenUrl(@RequestBody request: ShortenRequest): ResponseEntity<ShortenResponse> {
         val urlMapping = urlShortenerService.shortenUrl(
             longUrl = request.longUrl,
             customAlias = request.customAlias.takeIf { it?.isNotBlank() == true },
             expirationDate = request.expirationDate
         )
 
-        return ShortenResponse(
+        val response = ShortenResponse(
             shortUrl = "$baseUrl/${urlMapping.id}",
             longUrl = urlMapping.longUrl,
             expirationDate = urlMapping.expirationDate?.toString()
         )
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .header("Location", response.shortUrl)
+            .body(response)
     }
 
     @GetMapping("/{shortened}")
