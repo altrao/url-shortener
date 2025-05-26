@@ -13,4 +13,6 @@ data class UrlMapping(
     val creationDate: Instant = Instant.now(),
     val expirationDate: Instant? = null,
     val clickCount: Int = 0
-): Serializable
+) : Serializable {
+    fun isExpired(): Boolean = expirationDate?.isBefore(Instant.now()) == true
+}

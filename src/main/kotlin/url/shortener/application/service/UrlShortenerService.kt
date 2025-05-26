@@ -8,6 +8,8 @@ import url.shortener.application.exception.InvalidRequestException
 import url.shortener.domain.model.UrlMapping
 import url.shortener.domain.repository.UrlMappingRepository
 import url.shortener.infrastructure.UrlShortenerConfig
+import java.net.URI
+import java.net.URISyntaxException
 import java.security.SecureRandom
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -41,18 +43,19 @@ class UrlShortenerService(
     private val random = SecureRandom()
     private val hashing: HashFunction = Hashing.murmur3_32(random.nextInt())
 
+    /**
+     * Shortens a given long URL into a shorter and more manageable format. Optionally, a custom alias
+     * and expiration date can be provided. If no custom alias is specified, a unique identifier
+     * is generated automatically. The expiration date defaults to the configured time interval if not provided.
+     *
+     * @param longUrl The original long URL that needs to be shortened. Must be a valid URL.
+     * @param customAlias An optional custom alias for the shortened URL. If provided, it must be unique and not in use.
+     * @param expirationDate An optional expiration date for the shortened URL. The shortened URL will no longer be valid after this date.
+     * @return A [UrlMapping] object containing the details of the shortened URL, including the unique identifier, original long URL, and expiration details.
+     * @throws InvalidRequestException If the input values are invalid, such as an invalid URL format, a duplicate custom alias, or an expiration date in the past.
+     */
     fun shortenUrl(longUrl: String, customAlias: String? = null, expirationDate: Instant? = null): UrlMapping {
-        if (!longUrl.startsWith("http://") && !longUrl.startsWith("https://")) {
-            throw InvalidRequestException("Invalid URL format")
-        }
-
-        if (expirationDate?.isBefore(Instant.now()) == true) {
-            throw InvalidRequestException("URL expiration date cannot be in the past")
-        }
-
-        if (customAlias != null && urlMappingRepository.exists(customAlias)) {
-            throw InvalidRequestException("Custom alias already exists")
-        }
+        validate(longUrl, customAlias, expirationDate)
 
         val urlMapping = UrlMapping(
             id = customAlias ?: generateShortUrl(longUrl),
@@ -63,6 +66,39 @@ class UrlShortenerService(
         cache(urlMapping)
 
         return urlMappingRepository.save(urlMapping)
+    }
+
+    /**
+     * Validates the given inputs for URL shortening, ensuring that the URL is properly formatted,
+     * the custom alias is not yet in use, and the expiration date is not in the past.
+     *
+     * @param longUrl The original long URL to validate. Must have a valid scheme (http or https) and a non-empty host.
+     * @param customAlias An optional custom alias for the shortened URL which must not yet exist.
+     * @param expirationDate An optional expiration date for the shortened URL which must not be in the past.
+     * @throws InvalidRequestException If the URL is invalid, the alias already exists, or the expiration date is in the past.
+     */
+    private fun validate(longUrl: String, customAlias: String?, expirationDate: Instant?) {
+        try {
+            val url = URI(longUrl)
+
+            if (!listOf("http", "https").contains(url.scheme)) {
+                throw InvalidRequestException("Invalid URL scheme - must be http or https")
+            }
+
+            if (url.host.isNullOrBlank()) {
+                throw InvalidRequestException("Invalid URL - missing host")
+            }
+        } catch (e: URISyntaxException) {
+            throw InvalidRequestException("Invalid URL format")
+        }
+
+        if (expirationDate?.isBefore(Instant.now()) == true) {
+            throw InvalidRequestException("URL expiration date cannot be in the past")
+        }
+
+        if (customAlias != null && urlMappingRepository.exists(customAlias)) {
+            throw InvalidRequestException("Alias already exists")
+        }
     }
 
     /**
@@ -86,15 +122,17 @@ class UrlShortenerService(
     }
 
     fun getUrlMapping(shortUrl: String): UrlMapping? {
-        val urlMapping = findAndCache(shortUrl) ?: return null
-
-        if (urlMapping.expirationDate?.isBefore(Instant.now()) == true) {
-            throw InvalidRequestException("URL has expired")
-        }
-
-        return urlMapping
+        return findAndCache(shortUrl).takeIf { it?.isExpired() == false }
     }
 
+    /**
+     * Attempts to find a URL mapping for the provided short URL in the cache. If the mapping is not found in the cache,
+     * retrieves it from the database and stores it back in the cache for future lookups. If the mapping exists in the cache,
+     * updates its expiration time.
+     *
+     * @param shortUrl The unique identifier for the short URL to search in the cache or database.
+     * @return The corresponding `UrlMapping` if found, or null if the short URL does not exist.
+     */
     private fun findAndCache(shortUrl: String): UrlMapping? {
         val cached = redis.opsForValue().get(shortUrl)
 
